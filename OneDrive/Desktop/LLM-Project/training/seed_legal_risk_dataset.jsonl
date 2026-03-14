@@ -1,0 +1,30 @@
+{"text": "Provider liability is unlimited for all direct, indirect, and consequential damages.", "label": "CRITICAL", "clause_type": "Limitation of Liability", "source": "seed"}
+{"text": "Company may process personal data globally without a data processing agreement or breach notice obligations.", "label": "CRITICAL", "clause_type": "Data Privacy & Security (GDPR / CCPA)", "source": "seed"}
+{"text": "Vendor indemnifies customer for all claims, penalties, and losses without exclusions or caps.", "label": "CRITICAL", "clause_type": "Indemnification", "source": "seed"}
+{"text": "Customer may terminate immediately for convenience while vendor remains fully liable for open obligations.", "label": "CRITICAL", "clause_type": "Term & Termination", "source": "seed"}
+{"text": "Supplier must maintain cyber, privacy, and security compliance but no breach response timeline is stated.", "label": "CRITICAL", "clause_type": "Data Privacy & Security (GDPR / CCPA)", "source": "seed"}
+{"text": "This agreement imposes uncapped liability for any confidentiality or intellectual property breach.", "label": "CRITICAL", "clause_type": "Limitation of Liability", "source": "seed"}
+{"text": "Supplier shall indemnify customer on a sole and exclusive basis for all third-party claims.", "label": "HIGH", "clause_type": "Indemnification", "source": "seed"}
+{"text": "Either party may terminate for convenience on ten days notice with no transition assistance.", "label": "HIGH", "clause_type": "Term & Termination", "source": "seed"}
+{"text": "Customer may assign this agreement freely while vendor requires prior written consent.", "label": "HIGH", "clause_type": "Assignment & Subcontracting", "source": "seed"}
+{"text": "Service credits are the exclusive remedy for repeated service level failures.", "label": "HIGH", "clause_type": "SLA & Penalties", "source": "seed"}
+{"text": "Fees are non-refundable even if provider fails to deliver material services.", "label": "HIGH", "clause_type": "Payment Terms & Invoicing", "source": "seed"}
+{"text": "The warranty disclaimer removes all implied warranties and narrows remedies to provider discretion.", "label": "HIGH", "clause_type": "Warranty & Disclaimer", "source": "seed"}
+{"text": "Governing law is referenced but the state and venue are not clearly identified.", "label": "MEDIUM", "clause_type": "Governing Law & Jurisdiction", "source": "seed"}
+{"text": "The agreement references data security standards but does not define audit rights or reporting cadence.", "label": "MEDIUM", "clause_type": "Audit Rights", "source": "seed"}
+{"text": "Payment is due on receipt and invoicing disputes must be raised within five business days.", "label": "MEDIUM", "clause_type": "Payment Terms & Invoicing", "source": "seed"}
+{"text": "Force majeure covers broad business interruptions without mitigation duties.", "label": "MEDIUM", "clause_type": "Force Majeure", "source": "seed"}
+{"text": "Notice requirements are inconsistent across email and courier methods.", "label": "MEDIUM", "clause_type": "Notice Requirements", "source": "seed"}
+{"text": "Confidential information survives termination but return and deletion timing is not specified.", "label": "MEDIUM", "clause_type": "Confidentiality & NDA", "source": "seed"}
+{"text": "Assignment requires prior written consent from the other party.", "label": "LOW", "clause_type": "Assignment & Subcontracting", "source": "seed"}
+{"text": "Either party may terminate for cause after a thirty day cure period.", "label": "LOW", "clause_type": "Term & Termination", "source": "seed"}
+{"text": "Provider must carry reasonable insurance coverage and provide certificates on request.", "label": "LOW", "clause_type": "Insurance Requirements", "source": "seed"}
+{"text": "Notices may be delivered by email to designated contacts with confirmation of receipt.", "label": "LOW", "clause_type": "Notice Requirements", "source": "seed"}
+{"text": "The agreement includes a standard severability clause and non-waiver provision.", "label": "LOW", "clause_type": "Severability & Waiver", "source": "seed"}
+{"text": "Customer data must be returned within thirty days after termination.", "label": "LOW", "clause_type": "Data Privacy & Security (GDPR / CCPA)", "source": "seed"}
+{"text": "Liability is capped at fees paid in the twelve months before the claim and excludes consequential damages.", "label": "COMPLIANT", "clause_type": "Limitation of Liability", "source": "seed"}
+{"text": "The parties will comply with GDPR and execute a data processing addendum before processing personal data.", "label": "COMPLIANT", "clause_type": "Data Privacy & Security (GDPR / CCPA)", "source": "seed"}
+{"text": "Indemnification is mutual and limited to third-party claims arising from each party's negligence.", "label": "COMPLIANT", "clause_type": "Indemnification", "source": "seed"}
+{"text": "Either party may terminate for convenience on sixty days notice with payment for services performed.", "label": "COMPLIANT", "clause_type": "Term & Termination", "source": "seed"}
+{"text": "Governing law is the State of Delaware and venue is the state and federal courts in Wilmington.", "label": "COMPLIANT", "clause_type": "Governing Law & Jurisdiction", "source": "seed"}
+{"text": "Confidentiality obligations survive for three years and require prompt return or deletion of data.", "label": "COMPLIANT", "clause_type": "Confidentiality & NDA", "source": "seed"}

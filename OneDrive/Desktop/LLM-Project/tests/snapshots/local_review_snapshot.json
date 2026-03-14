@@ -1,0 +1,10 @@
+{
+  "overall_contract_risk": "CRITICAL",
+  "minimum_clause_count": 4,
+  "required_report_sections": [
+    "Section 1",
+    "Section 2",
+    "Section 3",
+    "Section 8"
+  ]
+}

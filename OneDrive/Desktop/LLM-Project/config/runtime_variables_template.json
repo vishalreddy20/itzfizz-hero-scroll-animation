@@ -1,0 +1,10 @@
+{
+  "contract_text": "<full extracted text from document>",
+  "jurisdiction": "<detected or user-specified governing law>",
+  "contract_type": "<detected or user-specified: MSA | NDA | SaaS | SOW | etc>",
+  "counterparty_type": "<Customer | Vendor | Partner | Employee>",
+  "playbook_rules": "<RAG-retrieved snippets from playbook>",
+  "stance": "BALANCED",
+  "audience": "Legal Counsel",
+  "full_analysis_json": "<compiled output from Modes 1-3>"
+}

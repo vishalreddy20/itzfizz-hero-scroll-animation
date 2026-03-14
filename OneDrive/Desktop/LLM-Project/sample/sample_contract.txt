@@ -1,0 +1,31 @@
+MASTER SERVICES AGREEMENT
+
+This Master Services Agreement ("Agreement") is entered into between Alpha Systems Inc. and Beta Retail LLC.
+Effective Date: January 10, 2026
+
+1. Scope of Services
+Provider will deliver software implementation services and support as detailed in each Statement of Work.
+
+2. Term and Termination
+This Agreement begins on the Effective Date and continues for one year. Customer may terminate for convenience at any time with 10 days notice.
+
+3. Fees and Invoicing
+Customer shall pay all undisputed invoices within 45 days of receipt.
+
+4. Confidentiality
+Each party shall keep confidential information of the other party confidential and use it only for contract performance.
+
+5. Indemnification
+Provider shall indemnify, defend, and hold harmless Customer from all claims arising out of this Agreement.
+
+6. Limitation of Liability
+Provider's liability under this Agreement shall be unlimited.
+
+7. Data Protection
+Provider will implement commercially reasonable safeguards for personal data.
+
+8. Governing Law
+This Agreement is governed by the laws of California.
+
+9. Entire Agreement
+This Agreement constitutes the entire agreement between the parties and supersedes prior discussions.
