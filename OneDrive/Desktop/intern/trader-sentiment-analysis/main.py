@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import logging
 from pathlib import Path
 
@@ -11,6 +12,9 @@ from src.analysis import (
     compute_sentiment_lag_correlations,
     run_kruskal_wallis_pnl_by_sentiment,
     run_spearman_tests,
+    run_trade_level_spearman,
+    smart_money_top5_vs_rest_by_regime,
+    train_profitability_baseline,
     trader_concentration_metrics,
 )
 from src.data_loader import load_raw_datasets
@@ -32,11 +36,12 @@ logging.basicConfig(
 logger = logging.getLogger("pipeline")
 
 
-def run_pipeline(project_root: Path) -> None:
+def run_pipeline(project_root: Path, mode: str = "full") -> None:
     """Run full project pipeline from loading to outputs.
 
     Args:
         project_root: Root path of project.
+        mode: "full" for complete run, "fast" to skip expensive steps.
     """
     data_raw = project_root / "data" / "raw"
     data_processed = project_root / "data" / "processed"
@@ -63,18 +68,36 @@ def run_pipeline(project_root: Path) -> None:
 
     kruskal_out = run_kruskal_wallis_pnl_by_sentiment(merged)
     spearman_out = run_spearman_tests(daily)
+    trade_spearman_out = run_trade_level_spearman(merged)
     lag_out = compute_sentiment_lag_correlations(daily, max_lag=3)
     concentration_out = trader_concentration_metrics(merged)
+    top5_vs_rest = smart_money_top5_vs_rest_by_regime(merged)
+    model_out = {
+        "train_rows": float("nan"),
+        "test_rows": float("nan"),
+        "accuracy": float("nan"),
+        "f1": float("nan"),
+        "roc_auc": float("nan"),
+    }
+    if mode == "full":
+        model_out = train_profitability_baseline(merged)
+
+    trade_spearman_out.to_csv(data_processed / "trade_level_spearman.csv", index=False)
+    top5_vs_rest.to_csv(data_processed / "top5_vs_rest_regime_summary.csv", index=False)
+    pd.DataFrame([model_out]).to_csv(data_processed / "profitability_baseline_metrics.csv", index=False)
 
     zero_pnl_pct = (merged["closedPnL"] == 0).mean() * 100
     leverage_q = merged["leverage"].quantile([0.25, 0.5, 0.75, 0.95, 0.99]).to_dict()
 
-    plot_sentiment_timeseries(fg_clean, fig_dir / "sentiment_timeseries.png")
-    plot_sentiment_distribution(fg_clean, fig_dir / "sentiment_distribution.png")
-    plot_autocorrelation_sentiment(fg_clean, fig_dir / "sentiment_autocorrelation.png")
-    plot_daily_pnl_area(daily, fig_dir / "daily_pnl_area.png")
-    plot_leverage_distribution(merged, fig_dir / "leverage_distribution.png")
-    plot_lag_correlations(lag_out, fig_dir / "lag_correlations.png")
+    if mode == "full":
+        plot_sentiment_timeseries(fg_clean, fig_dir / "sentiment_timeseries.png")
+        plot_sentiment_distribution(fg_clean, fig_dir / "sentiment_distribution.png")
+        plot_autocorrelation_sentiment(fg_clean, fig_dir / "sentiment_autocorrelation.png")
+        plot_daily_pnl_area(daily, fig_dir / "daily_pnl_area.png")
+        plot_leverage_distribution(merged, fig_dir / "leverage_distribution.png")
+        plot_lag_correlations(lag_out, fig_dir / "lag_correlations.png")
+    else:
+        logger.info("FAST mode enabled: skipped figure generation and baseline model training.")
 
     logger.info("========== KEY STATS ==========")
     logger.info("Merged rows: %d", len(merged))
@@ -102,12 +125,30 @@ def run_pipeline(project_root: Path) -> None:
         concentration_out["top3_share"] * 100,
         concentration_out["top5_share"] * 100,
     )
+    logger.info(
+        "Baseline model OOS metrics accuracy=%.4f f1=%.4f roc_auc=%.4f (train=%s test=%s)",
+        model_out["accuracy"],
+        model_out["f1"],
+        model_out["roc_auc"],
+        "NA" if pd.isna(model_out["train_rows"]) else str(int(model_out["train_rows"])),
+        "NA" if pd.isna(model_out["test_rows"]) else str(int(model_out["test_rows"])),
+    )
 
     with pd.option_context("display.max_rows", 50, "display.max_columns", 20):
         logger.info("\nSpearman tests:\n%s", spearman_out.to_string(index=False))
+        logger.info("\nTrade-level Spearman tests:\n%s", trade_spearman_out.to_string(index=False))
         logger.info("\nLagged correlations:\n%s", lag_out.to_string(index=False))
         logger.info("\nSentiment summary:\n%s", sentiment_summary.to_string(index=False))
+        logger.info("\nTop5 vs Other27 by regime:\n%s", top5_vs_rest.to_string(index=False))
 
 
 if __name__ == "__main__":
-    run_pipeline(Path(__file__).resolve().parent)
+    parser = argparse.ArgumentParser(description="Run trader sentiment pipeline.")
+    parser.add_argument(
+        "--mode",
+        choices=["full", "fast"],
+        default="full",
+        help="Execution mode: full (all outputs) or fast (skip heavy steps).",
+    )
+    args = parser.parse_args()
+    run_pipeline(Path(__file__).resolve().parent, mode=args.mode)

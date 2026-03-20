@@ -85,9 +85,17 @@ This command will:
 
 ## Key Findings Summary
 
-1. Performance differs significantly across sentiment regimes: Kruskal-Wallis $H=1226.9956$, $p=2.238\times10^{-264}$.
-2. Daily win rate rises with sentiment score: Spearman $\rho=0.1610$, $p=0.000404$.
-3. Average leverage falls as sentiment score rises: Spearman $\rho=-0.1124$, $p=0.0138$.
+1. Performance differs significantly across sentiment regimes even after restricting to closed trades: Kruskal-Wallis $H=730.3288$, $p=9.436\times10^{-157}$, with small effect size $\epsilon^2=0.0070$.
+2. Trade-level sentiment signal is statistically real but weak: Spearman $(\text{sentiment},\text{closedPnL})=0.0262$ and $(\text{sentiment},\text{is_profitable})=0.0209$.
+3. Out-of-sample baseline model for profitability is modest but non-random: accuracy $0.5493$, F1 $0.6243$, ROC-AUC $0.5371$.
+
+## Model and Cohort Outputs
+
+The pipeline now also writes:
+
+1. `data/processed/trade_level_spearman.csv`
+2. `data/processed/top5_vs_rest_regime_summary.csv`
+3. `data/processed/profitability_baseline_metrics.csv`
 
 ## Embedded Chart Preview
 
@@ -102,6 +110,7 @@ This command will:
 1. Random seeds are fixed to `42` where random algorithms are used.
 2. Cleaning logic quarantines impossible records (for example, non-positive size/price).
 3. Statistical tests include non-parametric methods (Kruskal-Wallis, Spearman) suitable for heavy-tailed returns.
+4. Closed-trade filtering is applied for PnL-centric evaluation to avoid zero-PnL dilution from non-closed rows.
 
 ## Deliverables
 

@@ -8,10 +8,26 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 from scipy.stats import kruskal, spearmanr
+from sklearn.compose import ColumnTransformer
 from sklearn.cluster import KMeans
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 
 logger = logging.getLogger(__name__)
+
+
+def _closed_trade_subset(df: pd.DataFrame) -> pd.DataFrame:
+    """Prefer closed trades for PnL-centric analytics."""
+    out = df.copy()
+    if "is_closed_trade" in out.columns:
+        closed = out.loc[out["is_closed_trade"] == 1].copy()
+        if not closed.empty:
+            return closed
+    closed = out.loc[out["closedPnL"] != 0].copy()
+    return closed if not closed.empty else out
 
 
 def run_kruskal_wallis_pnl_by_sentiment(merged_df: pd.DataFrame) -> Dict[str, float]:
@@ -23,9 +39,10 @@ def run_kruskal_wallis_pnl_by_sentiment(merged_df: pd.DataFrame) -> Dict[str, fl
     Returns:
         Dict with test statistic and p-value.
     """
+    df = _closed_trade_subset(merged_df)
     groups: List[np.ndarray] = []
     for label in ["Extreme Fear", "Fear", "Neutral", "Greed", "Extreme Greed"]:
-        vals = merged_df.loc[merged_df["sentiment_label"] == label, "closedPnL"].dropna().values
+        vals = df.loc[df["sentiment_label"] == label, "closedPnL"].dropna().values
         if len(vals) > 0:
             groups.append(vals)
 
@@ -64,6 +81,21 @@ def run_spearman_tests(daily_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def run_trade_level_spearman(merged_df: pd.DataFrame) -> pd.DataFrame:
+    """Compute trade-level Spearman correlations against sentiment score."""
+    df = _closed_trade_subset(merged_df)
+    rows = []
+    metrics = ["closedPnL", "trade_return_pct", "is_profitable", "position_size_usd"]
+    for metric in metrics:
+        subset = df[["sentiment_score", metric]].dropna()
+        if len(subset) < 3 or subset[metric].nunique(dropna=True) < 2:
+            rows.append({"metric": metric, "spearman_rho": np.nan, "p_value": np.nan})
+            continue
+        rho, p_value = spearmanr(subset["sentiment_score"], subset[metric])
+        rows.append({"metric": metric, "spearman_rho": float(rho), "p_value": float(p_value)})
+    return pd.DataFrame(rows)
+
+
 def trader_concentration_metrics(merged_df: pd.DataFrame) -> Dict[str, float]:
     """Measure concentration risk in trader-level PnL contributions."""
     df = merged_df.copy()
@@ -77,6 +109,98 @@ def trader_concentration_metrics(merged_df: pd.DataFrame) -> Dict[str, float]:
         "top1_share": float(ranked.head(1)["total_pnl"].sum() / total),
         "top3_share": float(ranked.head(3)["total_pnl"].sum() / total),
         "top5_share": float(ranked.head(5)["total_pnl"].sum() / total),
+    }
+
+
+def smart_money_top5_vs_rest_by_regime(merged_df: pd.DataFrame) -> pd.DataFrame:
+    """Compare top 5 traders by cumulative PnL vs remaining traders by regime."""
+    df = _closed_trade_subset(merged_df)
+    trader_pnl = df.groupby("account", as_index=False).agg(total_pnl=("closedPnL", "sum"))
+    top5_accounts = set(trader_pnl.sort_values("total_pnl", ascending=False).head(5)["account"])
+    df["cohort_top5"] = np.where(df["account"].isin(top5_accounts), "Top 5", "Other 27")
+
+    return (
+        df.groupby(["cohort_top5", "sentiment_label"], as_index=False)
+        .agg(
+            trades=("closedPnL", "size"),
+            mean_pnl=("closedPnL", "mean"),
+            median_pnl=("closedPnL", "median"),
+            win_rate=("is_profitable", "mean"),
+            mean_position_size=("position_size_usd", "mean"),
+        )
+        .sort_values(["cohort_top5", "sentiment_label"])
+        .reset_index(drop=True)
+    )
+
+
+def train_profitability_baseline(merged_df: pd.DataFrame) -> Dict[str, float]:
+    """Train a simple out-of-sample logistic baseline for trade profitability."""
+    df = _closed_trade_subset(merged_df)
+    use = df[
+        [
+            "date",
+            "is_profitable",
+            "sentiment_score",
+            "side",
+            "day_of_week",
+            "hour",
+            "position_size_usd",
+        ]
+    ].dropna()
+
+    if len(use) < 200:
+        return {
+            "train_rows": float(len(use)),
+            "test_rows": np.nan,
+            "accuracy": np.nan,
+            "f1": np.nan,
+            "roc_auc": np.nan,
+        }
+
+    use = use.sort_values("date").reset_index(drop=True)
+    split_idx = int(len(use) * 0.8)
+    train_df = use.iloc[:split_idx].copy()
+    test_df = use.iloc[split_idx:].copy()
+
+    X_train = train_df.drop(columns=["is_profitable", "date"])
+    y_train = train_df["is_profitable"].astype(int)
+    X_test = test_df.drop(columns=["is_profitable", "date"])
+    y_test = test_df["is_profitable"].astype(int)
+
+    cat_cols = ["side", "day_of_week"]
+    num_cols = ["sentiment_score", "hour", "position_size_usd"]
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
+            ("num", StandardScaler(), num_cols),
+        ]
+    )
+
+    model = Pipeline(
+        steps=[
+            ("prep", preprocessor),
+            (
+                "clf",
+                LogisticRegression(
+                    max_iter=1000,
+                    random_state=42,
+                    class_weight="balanced",
+                ),
+            ),
+        ]
+    )
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+    y_prob = model.predict_proba(X_test)[:, 1]
+
+    return {
+        "train_rows": float(len(train_df)),
+        "test_rows": float(len(test_df)),
+        "accuracy": float(accuracy_score(y_test, y_pred)),
+        "f1": float(f1_score(y_test, y_pred, zero_division=0)),
+        "roc_auc": float(roc_auc_score(y_test, y_prob)),
     }
 
 
