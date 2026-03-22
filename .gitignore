@@ -1,0 +1,17 @@
+node_modules/
+
+# build outputs
+.next/
+out/
+
+# local tooling/cache
+.netlify/
+build-output.log
+*.log
+
+# env
+.env*
+
+# os
+.DS_Store
+Thumbs.db
